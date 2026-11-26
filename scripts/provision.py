@@ -265,6 +265,28 @@ def release(ecs, cd, svc, service, image, env, infra, group):
     return dep
 
 
+def wait_services(ecs, cluster, names, timeout=900):
+    """Tunggu runningCount == desiredCount; kalau gagal tampilkan alasan task berhenti."""
+    deadline, seen = time.time() + timeout, set()
+    while time.time() < deadline:
+        services = ecs.describe_services(cluster=cluster, services=names)["services"]
+        for s in services:
+            for ev in reversed(s.get("events", [])[:3]):
+                if ev["id"] not in seen:
+                    seen.add(ev["id"])
+                    log(f"  [{s['serviceName']}] {ev['message']}")
+        if all(s["runningCount"] >= s["desiredCount"] > 0 for s in services):
+            log("  semua service berjalan")
+            return
+        time.sleep(15)
+    stopped = ecs.list_tasks(cluster=cluster, desiredStatus="STOPPED")["taskArns"][:5]
+    if stopped:
+        for t in ecs.describe_tasks(cluster=cluster, tasks=stopped)["tasks"]:
+            reasons = [c.get("reason", "") for c in t.get("containers", [])]
+            log(f"  task berhenti: {t.get('stoppedReason')} {reasons}")
+    sys.exit("Service ECS belum berjalan setelah 15 menit (lihat alasan di atas)")
+
+
 def wait_deployments(cd, ids, timeout=1800):
     pending, failed, last = set(ids), [], {}
     deadline = time.time() + timeout
@@ -320,10 +342,8 @@ def app(args):
         ensure_deployment_group(cd, svc, infra, deploy_role)
         created.append(name)
 
-    if created:
-        log("Menunggu service pertama kali sehat (bisa 3-5 menit)...")
-        ecs.get_waiter("services_stable").wait(cluster=infra["cluster"], services=created,
-                                               WaiterConfig={"Delay": 15, "MaxAttempts": 40})
+    log("Menunggu task ECS berjalan (pertama kali bisa 3-5 menit)...")
+    wait_services(ecs, infra["cluster"], [f"{PREFIX}-{svc}" for svc in SERVICES])
     if deployments:
         log("Menunggu CodeDeploy (canary 10% selama 5 menit, lalu 100%)...")
         wait_deployments(cd, deployments)
