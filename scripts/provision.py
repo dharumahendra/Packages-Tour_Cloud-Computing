@@ -183,8 +183,8 @@ def infrastructure():
         logs.create_log_group(logGroupName=log_group)
         logs.put_retention_policy(logGroupName=log_group, retentionInDays=7)
     except ClientError as e:
-        if code(e) != "ResourceAlreadyExistsException":
-            raise
+        # Akun lab tidak boleh CreateLogGroup; container membuatnya sendiri (awslogs-create-group)
+        log(f"Log group tidak dibuat dari sini ({code(e)}); dibuat oleh task ECS")
 
     app = f"{PREFIX}-app"
     try:
@@ -205,7 +205,8 @@ def container_def(svc, image, env, log_group):
         "portMappings": [{"containerPort": 8080, "protocol": "tcp"}],
         "environment": [{"name": k, "value": v} for k, v in sorted(env.items())],
         "logConfiguration": {"logDriver": "awslogs", "options": {
-            "awslogs-group": log_group, "awslogs-region": region(), "awslogs-stream-prefix": svc}},
+            "awslogs-group": log_group, "awslogs-region": region(), "awslogs-stream-prefix": svc,
+            "awslogs-create-group": "true"}},
     }
 
 
