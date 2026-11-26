@@ -14,7 +14,11 @@ echo "== operator: buat paket (201)"
 RESP=$(curl -s -X POST "$API/admin/packages" -H "$J" -H "x-admin-key: $KEY" \
   -d '{"name":"Snorkeling Pulau Seribu 2D1N","destination":"Kepulauan Seribu","durationDays":2,"price":850000,"costPrice":600000,"quota":20,"operatorNotes":"Kapal berangkat 07.00"}')
 echo "$RESP"
-ID=$(echo "$RESP" | python3 -c 'import sys, json; print(json.load(sys.stdin)["packageId"])')
+ID=$(echo "$RESP" | sed -n 's/.*"packageId": *"\([^"]*\)".*/\1/p')   # tanpa python, jalan di Git Bash
+if [ -z "$ID" ]; then
+  echo "!! Gagal membuat paket. Kalau di atas 'Akses operator ditolak', ADMIN_KEY salah (harus sama dengan secret GitHub)."
+  exit 1
+fi
 
 echo "== catalog: daftar paket (tanpa costPrice/operatorNotes)"; curl -s "$API/packages"; echo
 echo "== catalog: filter destinasi";      curl -s "$API/packages?destination=seribu"; echo
