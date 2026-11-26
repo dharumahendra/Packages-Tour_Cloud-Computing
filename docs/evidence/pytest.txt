@@ -2,13 +2,14 @@
 platform win32 -- Python 3.12.10, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\Lenovo\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
 rootdir: D:\Mata_Kuliah\SEM 5\Packages Tour_Cloud Computing
-collecting ... collected 6 items
+collecting ... collected 7 items
 
-tests/test_services.py::test_health PASSED                               [ 16%]
-tests/test_services.py::test_operator_requires_key PASSED                [ 33%]
-tests/test_services.py::test_operator_ip_allowlist PASSED                [ 50%]
-tests/test_services.py::test_validation PASSED                           [ 66%]
-tests/test_services.py::test_full_flow_across_services PASSED            [ 83%]
+tests/test_services.py::test_health PASSED                               [ 14%]
+tests/test_services.py::test_operator_requires_key PASSED                [ 28%]
+tests/test_services.py::test_operator_ip_allowlist PASSED                [ 42%]
+tests/test_services.py::test_validation PASSED                           [ 57%]
+tests/test_services.py::test_full_flow_across_services PASSED            [ 71%]
+tests/test_services.py::test_http_adapter_routes_and_client_ip PASSED    [ 85%]
 tests/test_services.py::test_monolith_has_no_access_control PASSED       [100%]
 
-============================== 6 passed in 5.51s ==============================
+============================== 7 passed in 3.35s ==============================

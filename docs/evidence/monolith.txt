@@ -1,0 +1,6 @@
+﻿== 1. Data internal bocor ke publik (costPrice, operatorNotes)
+[{"name": "Tur Kawah Ijen", "destination": "Banyuwangi", "durationDays": 1, "price": 450000, "costPrice": 300000, "quota": 15, "operatorNotes": "Jemput jam 00.30", "packageId": "5588825c-1126-4935-bdc6-a2337e64da1a", "remainingQuota": 15, "status": "ACTIVE"}]
+== 2. Sisa kuota 999 diterima walau kuota 15
+{"name": "Tur Kawah Ijen", "destination": "Banyuwangi", "durationDays": 1, "price": 450000, "costPrice": 300000, "quota": 15, "operatorNotes": "Jemput jam 00.30", "packageId": "5588825c-1126-4935-bdc6-a2337e64da1a", "remainingQuota": 999, "status": "ACTIVE"}
+== 3. Hapus tanpa izin apa pun (HTTP status)
+204
