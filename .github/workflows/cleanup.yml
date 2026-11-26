@@ -1,0 +1,33 @@
+# Hapus semua resource AWS paket wisata (jalankan manual setelah tugas dinilai).
+name: cleanup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      STACK_PREFIX: tour
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install boto3
+      - name: Load AWS credentials
+        env:
+          KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          clean() { printf '%s' "$1" | tr -d '[:space:]' | sed -E 's/^aws_[a-z_]+=//'; }
+          for pair in "AWS_ACCESS_KEY_ID:$KEY_ID" "AWS_SECRET_ACCESS_KEY:$SECRET" "AWS_SESSION_TOKEN:$TOKEN"; do
+            name=${pair%%:*}; value=$(clean "${pair#*:}")
+            echo "::add-mask::$value"
+            echo "$name=$value" >> "$GITHUB_ENV"
+          done
+      - name: Destroy
+        run: python scripts/provision.py destroy
