@@ -31,9 +31,10 @@ https://calculator.aws → **Create estimate**, region **US East (N. Virginia)**
 | Elastic Load Balancing | Application LB, 1 ALB, processed bytes 1 GB/bulan, 10 koneksi baru/detik | ±17 |
 | Amazon S3 | S3 Standard 1 GB, 10.000 PUT, 100.000 GET | ±0,1 |
 | Amazon ECR | storage 1 GB | ±0,1 |
-| Amazon CloudWatch | Logs ingested 1 GB, 5 metric | ±2 |
+| Amazon CloudWatch | Logs ingested 1 GB | ±0,5 |
+| Amazon VPC → Public IPv4 address | 4 alamat in-use (2 task + 2 node ALB), 730 jam | ±14,6 |
 
-Total ±$37/bulan (±$450/12 bulan). Screenshot halaman **My estimate** yang menampilkan semua layanan + total.
+Total ±$50/bulan (±$603/12 bulan). Screenshot halaman **My estimate** yang menampilkan semua layanan + total.
 Di laporan: biaya dominan dari ALB dan Fargate yang menyala 24 jam (berbeda dari Lambda yang bayar per request).
 
 ## G3 — Masalah monolit (`g3-monolit.png`)
