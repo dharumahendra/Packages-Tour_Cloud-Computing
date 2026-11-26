@@ -1,4 +1,4 @@
-﻿# Paket Wisata Lokal — Microservices (ECS Fargate) + CI/CD di AWS
+# Paket Wisata Lokal — Microservices (ECS Fargate) + CI/CD di AWS
 
 Adaptasi lab AWS Academy **"Building Microservices and a CI/CD Pipeline with AWS"** untuk kasus
 **katalog paket wisata lokal**, memakai container di ECS Fargate (ALB + S3 + CodeDeploy) dan
@@ -28,7 +28,7 @@ sering menanyakan paket yang ternyata sudah penuh, dan data internal seperti har
 - deploy manual, dan bagian publik serta admin tidak bisa di-deploy atau diskalakan terpisah.
 
 **Solusi.** Monolit dipecah menjadi dua microservice (padanan *customer* dan *employee* di lab asli),
-infrastruktur ditulis sebagai kode (CloudFormation), dan setiap `git push` otomatis dites lalu di-deploy
+infrastruktur dibuat lewat skrip (boto3, karena akun lab tidak boleh CloudFormation), dan setiap `git push` otomatis dites lalu di-deploy
 dengan rilis bertahap (canary blue/green).
 
 > **Catatan lab.** Rencana awal memakai Lambda + API Gateway + DynamoDB. Akun lab tidak punya `LabRole`,
@@ -70,7 +70,7 @@ flowchart LR
 | Monolit Node.js di EC2 + RDS | `monolith/` (satu aplikasi, jalan lokal untuk analisis) |
 | Cloud9 + CodeCommit | Laptop + **GitHub** |
 | Docker + ECR + ECS Fargate | Sama: `services/*/Dockerfile`, repo ECR `tour-catalog`, `tour-operator` |
-| ALB + rule `/admin/*` | Sama: `infra/app.yaml` |
+| ALB + rule `/admin/*` | Sama: `scripts/provision.py` |
 | RDS | S3 (satu objek JSON per paket; role lab hanya punya akses S3) |
 | CodeDeploy blue/green | Sama, dengan `CodeDeployDefault.ECSCanary10Percent5Minutes` |
 | CodePipeline | GitHub Actions (`.github/workflows/deploy.yml`) |
@@ -96,7 +96,7 @@ flowchart LR
 ├── .github/workflows/deploy.yml # CI/CD GitHub Actions
 ├── scripts/
 │   ├── deploy.sh                # build image + deploy (dipanggil workflow)
-│   ├── ecs_deploy.py            # rilis blue/green via CodeDeploy
+│   ├── provision.py             # buat ECR, S3, ALB, ECS, CodeDeploy + rilis canary + destroy
 │   ├── e2e.sh                   # tes end-to-end
 │   └── monolith-demo.ps1        # demo masalah monolit (Gambar 3)
 ├── frontend/index.html          # halaman katalog statis (opsional)

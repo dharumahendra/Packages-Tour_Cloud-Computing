@@ -12,7 +12,7 @@ diblokir**. Satu-satunya role yang bisa dipakai Lambda (`…ECSEnforcerLambdaIam
 | API Gateway HTTP API | **Application Load Balancer** (`/admin/*` → operator) | — |
 | DynamoDB | **S3** (1 objek JSON per paket) | `PipelineRole` punya `AmazonS3FullAccess` |
 | CodeDeploy canary Lambda | **CodeDeploy blue/green ECS, canary 10% 5 menit** | `DeployRole` (`AWSCodeDeployRoleForECS`) |
-| SAM | **CloudFormation** (`infra/base.yaml`, `infra/app.yaml`) | — |
+| SAM | **Skrip boto3** `scripts/provision.py` (CloudFormation juga ditolak di akun lab) | — |
 | CloudShell | **GitHub Actions** (build Docker + deploy); demo monolit di laptop | — |
 
 Ini sama dengan arsitektur lab asli AWS Academy (ECS + ALB + CodeDeploy blue/green). Catat di bagian
@@ -51,13 +51,12 @@ Ketiga secret `AWS_*` **kedaluwarsa tiap sesi lab** — perbarui setiap Start La
 git push origin main
 ```
 GitHub → Actions → `test-and-deploy`: job `test` lalu `deploy` (±8–12 menit pertama kali). Baris terakhir log
-`Build and deploy` = **ApiUrl** (`http://tour-app-alb-….elb.amazonaws.com`).
+`Build and deploy` = **ApiUrl** (`http://tour-alb-….elb.amazonaws.com`).
 
 Screenshot untuk Gambar 6:
-- CloudFormation → stack `tour-base` dan `tour-app` = `CREATE_COMPLETE` (tab Resources).
-- ECS → Clusters → `tour-app-cluster` → Services `tour-app-catalog`, `tour-app-operator` (Running 1/1).
-- EC2 → Load Balancers → `tour-app-alb` → Listeners: port 80 dengan rule `/admin/*`, port 8080.
-- CodeDeploy → Applications → `tour-app` (dua deployment group). S3 → bucket `tour-base-packagesbucket…`.
+- ECS → Clusters → `tour-cluster` → Services `tour-catalog`, `tour-operator` (Running 1/1).
+- EC2 → Load Balancers → `tour-alb` → Listeners: port 80 dengan rule `/admin/*`, port 8080.
+- CodeDeploy → Applications → `tour-app` (dua deployment group). S3 → bucket `tour-packages-<account>`. ECR → repo `tour-catalog`, `tour-operator`.
 
 ### 6. Tes end-to-end (tabel bagian 5)
 Git Bash di laptop:
@@ -99,13 +98,13 @@ untuk kedua target group, dan **ECS → ClusterName, ServiceName** → `CPUUtili
 rentang 1 jam → `g8-cloudwatch.png` (catalog naik, operator datar).
 
 ### 10. Cleanup (setelah dinilai)
-CloudFormation → hapus `tour-app`, lalu kosongkan bucket data, lalu hapus `tour-base`. End Lab.
+Git Bash dengan kredensial lab: `python scripts/provision.py destroy`, lalu End Lab.
 
 ## Troubleshooting
 | Gejala | Solusi |
 | --- | --- |
 | `ExpiredToken` / `InvalidClientTokenId` di Actions | Perbarui 3 secret `AWS_*` |
-| Stack `tour-app` gagal / `ROLLBACK_COMPLETE` | CloudFormation → Events → baca error pertama; workflow berikutnya otomatis menghapus stack gagal lalu membuat ulang |
+| `AWS menolak <Operasi>: AccessDenied` | Izin lab tidak mencakup operasi itu; kirim pesannya untuk disesuaikan |
 | `not authorized … ecs:CreateCluster` / `elasticloadbalancing:*` / `iam:CreateServiceLinkedRole` | Izin lab tidak cukup untuk ECS/ALB → laporkan ke dosen/asisten dengan pesan errornya |
 | Service tidak sehat (target unhealthy) | ECS → service → Logs; cek task bisa pull image (subnet publik + public IP) |
 | CodeDeploy gagal | CodeDeploy → deployment → lihat event; rollback otomatis ke versi lama |
