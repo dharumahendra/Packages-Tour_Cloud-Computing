@@ -61,10 +61,7 @@ def base(_args):
         s3.head_bucket(Bucket=bucket)
     except ClientError:
         s3.create_bucket(Bucket=bucket)
-        s3.put_public_access_block(Bucket=bucket, PublicAccessBlockConfiguration={
-            "BlockPublicAcls": True, "IgnorePublicAcls": True,
-            "BlockPublicPolicy": True, "RestrictPublicBuckets": True})
-        log(f"Bucket {bucket} dibuat")
+        log(f"Bucket {bucket} dibuat (bucket baru S3 otomatis memblokir akses publik)")
     print(bucket)
 
 

@@ -89,9 +89,6 @@ flowchart LR
 ├── shared/
 │   ├── store.py                 # penyimpanan paket (S3 di AWS, folder lokal untuk demo)
 │   └── server.py                # adapter HTTP: request -> handler (dipakai di container)
-├── infra/
-│   ├── base.yaml                # stack tour-base: repo ECR + bucket S3
-│   └── app.yaml                 # stack tour-app: ALB, ECS, CodeDeploy
 ├── tests/                       # pytest + moto (S3 tiruan)
 ├── .github/workflows/deploy.yml # CI/CD GitHub Actions
 ├── scripts/
