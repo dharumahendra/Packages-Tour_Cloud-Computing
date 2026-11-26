@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Paket wisata lokal - dua microservice serverless (catalog + operator)
+
+Parameters:
+  LabRoleArn:
+    Type: String
+    Description: ARN role untuk Lambda (hasil Fase 0), contoh arn:aws:iam::123456789012:role/LabRole
+  DeployRoleArn:
+    Type: String
+    Default: ""
+    Description: ARN role untuk CodeDeploy (misalnya DeployRole). Kosong = pakai LabRoleArn
+  EnableCanary:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: false = tanpa CodeDeploy (alias langsung dipindah oleh CloudFormation)
+  AdminKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+    Description: Kunci untuk header x-admin-key yang dipakai operator (kosong = tanpa cek)
+  AllowedIps:
+    Type: String
+    Default: ""
+    Description: Daftar IP yang boleh mengakses /admin, dipisah koma (kosong = semua IP)
+  DeploymentType:
+    Type: String
+    Default: Canary10Percent5Minutes
+    AllowedValues:
+      - Canary10Percent5Minutes
+      - Linear10PercentEvery1Minute
+      - AllAtOnce
+
+Conditions:
+  HasDeployRole: !Not [!Equals [!Ref DeployRoleArn, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Handler: app.lambda_handler
+    Timeout: 10
+    MemorySize: 128
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Enabled: !Ref EnableCanary
+      Type: !Ref DeploymentType
+      Role: !If [HasDeployRole, !Ref DeployRoleArn, !Ref LabRoleArn]
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref PackagesTable
+
+Resources:
+  PackagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-packages"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: packageId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: packageId
+          KeyType: HASH
+
+  TourApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: ["*"]
+        AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
+        AllowHeaders: [content-type, x-admin-key]
+
+  CatalogFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-catalog"
+      Role: !Ref LabRoleArn
+      CodeUri: services/catalog/
+      Events:
+        Health:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: GET, Path: /health}
+        ListPackages:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: GET, Path: /packages}
+        GetPackage:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: GET, Path: "/packages/{id}"}
+
+  OperatorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-operator"
+      Role: !Ref LabRoleArn
+      CodeUri: services/operator/
+      Environment:
+        Variables:
+          ADMIN_KEY: !Ref AdminKey
+          ALLOWED_IPS: !Ref AllowedIps
+      Events:
+        Health:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: GET, Path: /admin/health}
+        ListPackages:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: GET, Path: /admin/packages}
+        CreatePackage:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: POST, Path: /admin/packages}
+        UpdatePackage:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: PUT, Path: "/admin/packages/{id}"}
+        DeletePackage:
+          Type: HttpApi
+          Properties: {ApiId: !Ref TourApi, Method: DELETE, Path: "/admin/packages/{id}"}
+
+Outputs:
+  ApiUrl:
+    Description: Invoke URL API Gateway
+    Value: !Sub "https://${TourApi}.execute-api.${AWS::Region}.amazonaws.com"
+  PackagesTableName:
+    Value: !Ref PackagesTable
+  CatalogFunctionName:
+    Value: !Ref CatalogFunction
+  OperatorFunctionName:
+    Value: !Ref OperatorFunction

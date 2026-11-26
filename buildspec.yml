@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  variables:
+    STACK_NAME: tour-app
+    ALLOWED_IPS: ""
+  parameter-store:
+    ADMIN_KEY: /tour-app/admin-key
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install --quiet pytest moto boto3
+      - sam --version || pip install --quiet aws-sam-cli
+  build:
+    commands:
+      - echo "== Tes unit"
+      - python -m pytest -q tests
+      - echo "== Build"
+      - sam build
+      - echo "== Deploy"
+      - LAB_ROLE_ARN=${LAB_ROLE_ARN:-$(aws iam get-role --role-name LabRole --query Role.Arn --output text)}
+      - PARAMS="LabRoleArn=$LAB_ROLE_ARN AdminKey=$ADMIN_KEY EnableCanary=${ENABLE_CANARY:-true}"
+      - if [ -n "$DEPLOY_ROLE_ARN" ]; then PARAMS="$PARAMS DeployRoleArn=$DEPLOY_ROLE_ARN"; fi
+      - if [ -n "$ALLOWED_IPS" ]; then PARAMS="$PARAMS AllowedIps=$ALLOWED_IPS"; fi
+      - >
+        sam deploy
+        --stack-name $STACK_NAME
+        --resolve-s3
+        --capabilities CAPABILITY_IAM
+        --no-confirm-changeset
+        --no-fail-on-empty-changeset
+        --parameter-overrides $PARAMS
+      - if [ -n "$FRONTEND_BUCKET" ]; then aws s3 sync frontend/ s3://$FRONTEND_BUCKET --delete; fi

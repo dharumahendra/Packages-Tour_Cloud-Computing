@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paket Wisata Lokal</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #1f2933; }
+    header { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
+    input { padding: .5rem .75rem; border: 1px solid #c7cdd4; border-radius: 6px; min-width: 240px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .card { border: 1px solid #e1e5ea; border-radius: 10px; padding: 1rem; }
+    .card h2 { font-size: 1.05rem; margin: 0 0 .25rem; }
+    .meta { color: #5f6b7a; font-size: .9rem; margin: .15rem 0; }
+    .price { font-weight: 700; margin-top: .6rem; }
+    .empty { color: #5f6b7a; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Paket Wisata Lokal</h1>
+      <p class="meta">Data diambil dari catalog-service (read-only).</p>
+    </div>
+    <input id="destination" placeholder="Cari destinasi, mis. Bali">
+  </header>
+  <div id="grid" class="grid"><p class="empty">Memuat...</p></div>
+
+  <script>
+    // Ganti dengan output ApiUrl dari stack CloudFormation tour-app
+    const API_URL = "https://<api-id>.execute-api.us-east-1.amazonaws.com";
+    const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+
+    function line(cls, text) {
+      const p = document.createElement("p");
+      p.className = cls;
+      p.textContent = text;
+      return p;
+    }
+
+    async function load() {
+      const q = document.getElementById("destination").value.trim();
+      const url = API_URL + "/packages" + (q ? "?destination=" + encodeURIComponent(q) : "");
+      const grid = document.getElementById("grid");
+      try {
+        const packages = await (await fetch(url)).json();
+        grid.innerHTML = "";
+        for (const p of packages) {
+          const card = document.createElement("article");
+          card.className = "card";
+          const h = document.createElement("h2");
+          h.textContent = p.name;
+          card.append(
+            h,
+            line("meta", p.destination + " · " + p.durationDays + " hari"),
+            line("meta", "Sisa kuota: " + p.remainingQuota + " / " + p.quota + (p.availability ? " (" + p.availability + ")" : "")),
+            line("price", rupiah.format(p.price) + " / orang")
+          );
+          grid.appendChild(card);
+        }
+        if (!packages.length) grid.innerHTML = '<p class="empty">Belum ada paket untuk destinasi ini.</p>';
+      } catch (e) {
+        grid.innerHTML = '<p class="empty">Gagal memuat data. Cek API_URL.</p>';
+      }
+    }
+
+    let timer;
+    document.getElementById("destination").addEventListener("input", () => {
+      clearTimeout(timer);
+      timer = setTimeout(load, 300);
+    });
+    load();
+  </script>
+</body>
+</html>

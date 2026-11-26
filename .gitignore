@@ -1,0 +1,6 @@
+env.json
+.aws-sam/
+__pycache__/
+.pytest_cache/
+*.zip
+.env
