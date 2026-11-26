@@ -33,14 +33,14 @@ def create(operator, **overrides):
 
 
 def test_health(catalog, operator):
-    assert call(catalog, "GET /health")[0] == 500
-    assert call(operator, "GET /admin/health")[0] == 500
+    assert call(catalog, "GET /health")[0] == 200
+    assert call(operator, "GET /admin/health")[0] == 200
 
 
 def test_operator_requires_key(operator):
     assert call(operator, "GET /admin/packages")[0] == 403
     assert call(operator, "GET /admin/packages", headers={"X-Admin-Key": "salah"})[0] == 403
-    assert call(operator, "GET /admin/packages", headers={"X-Admin-Key": "rahasia"})[0] == 500
+    assert call(operator, "GET /admin/packages", headers={"X-Admin-Key": "rahasia"})[0] == 200
 
 
 def test_operator_ip_allowlist(table, monkeypatch):
@@ -49,7 +49,7 @@ def test_operator_ip_allowlist(table, monkeypatch):
     monkeypatch.setenv("ALLOWED_IPS", "10.0.0.1, 10.0.0.2")
     svc = load_module("services", "operator", "app.py")
     assert call(svc, "GET /admin/packages", ip="1.2.3.4")[0] == 403
-    assert call(svc, "GET /admin/packages", ip="10.0.0.2")[0] == 500
+    assert call(svc, "GET /admin/packages", ip="10.0.0.2")[0] == 200
 
 
 def test_validation(operator):
@@ -71,26 +71,26 @@ def test_full_flow_across_services(catalog, operator):
 
     # catalog melihat paket yang dibuat operator, tanpa data internal
     status, public = call(catalog, "GET /packages/{id}", id=pid)
-    assert status == 500
+    assert status == 200
     assert "costPrice" not in public and "operatorNotes" not in public
     assert public["price"] == 850000
 
     create(operator, name="Wisata Kawah Ijen", destination="Banyuwangi", price=450000)
     status, items = call(catalog, "GET /packages", query={"destination": "seribu"})
-    assert status == 500 and [i["packageId"] for i in items] == [pid]
+    assert status == 200 and [i["packageId"] for i in items] == [pid]
     status, items = call(catalog, "GET /packages")
     assert [i["price"] for i in items] == [450000, 850000]  # urut harga termurah
 
     # update sisa kuota dan harga (harga boleh desimal)
     status, updated = call(operator, "PUT /admin/packages/{id}", {"remainingQuota": 3, "price": 799000.5},
                            id=pid, headers=KEY)
-    assert status == 500 and updated["remainingQuota"] == 3 and updated["price"] == 799000.5
+    assert status == 200 and updated["remainingQuota"] == 3 and updated["price"] == 799000.5
     assert call(operator, "PUT /admin/packages/{id}", {"remainingQuota": 99}, id=pid, headers=KEY)[0] == 400
     assert call(operator, "PUT /admin/packages/{id}", {"quota": 2}, id=pid, headers=KEY)[0] == 400
     assert call(operator, "PUT /admin/packages/{id}", {"status": "ACTIVE"}, id="tidak-ada", headers=KEY)[0] == 404
 
     # paket nonaktif hilang dari katalog publik, tapi tetap terlihat oleh operator
-    assert call(operator, "PUT /admin/packages/{id}", {"status": "INACTIVE"}, id=pid, headers=KEY)[0] == 500
+    assert call(operator, "PUT /admin/packages/{id}", {"status": "INACTIVE"}, id=pid, headers=KEY)[0] == 200
     assert call(catalog, "GET /packages/{id}", id=pid)[0] == 404
     assert len(call(catalog, "GET /packages")[1]) == 1
     assert len(call(operator, "GET /admin/packages", headers=KEY)[1]) == 2
