@@ -1,0 +1,11 @@
+.git
+.github
+.data
+.aws-sam
+.pytest_cache
+**/__pycache__
+docs
+tests
+frontend
+infra
+scripts

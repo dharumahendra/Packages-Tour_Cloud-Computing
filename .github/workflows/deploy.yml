@@ -1,4 +1,4 @@
-# CI/CD: setiap push ke main -> tes -> build -> deploy ke AWS (stack tour-app).
+# CI/CD: setiap push ke main -> tes -> build image -> deploy ke ECS (CodeDeploy blue/green canary).
 # Secrets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN kedaluwarsa tiap sesi lab:
 # perbarui dari "AWS Details" setiap kali Start Lab.
 name: test-and-deploy
@@ -19,22 +19,22 @@ jobs:
       - name: Unit tests
         run: |
           pip install pytest moto boto3
-          python -m pytest -q tests
+          python -m pytest -v tests
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    concurrency: deploy-aws
     env:
-      STACK_NAME: tour-app
       AWS_REGION: us-east-1
+      STACK_PREFIX: tour
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: aws-actions/setup-sam@v2
-        with:
-          use-installer: true
+      - run: pip install boto3
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -43,24 +43,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Build and deploy
         env:
-          LAB_ROLE_ARN: ${{ secrets.LAB_ROLE_ARN }}
-          DEPLOY_ROLE_ARN: ${{ secrets.DEPLOY_ROLE_ARN }}
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
           ALLOWED_IPS: ${{ vars.ALLOWED_IPS }}
-          ENABLE_CANARY: ${{ vars.ENABLE_CANARY || 'true' }}
+          DEPLOYMENT_CONFIG: ${{ vars.DEPLOYMENT_CONFIG }}
         run: |
-          PARAMS="LabRoleArn=$LAB_ROLE_ARN AdminKey=$ADMIN_KEY EnableCanary=$ENABLE_CANARY"
-          if [ -n "$DEPLOY_ROLE_ARN" ]; then PARAMS="$PARAMS DeployRoleArn=$DEPLOY_ROLE_ARN"; fi
-          if [ -n "$ALLOWED_IPS" ]; then PARAMS="$PARAMS AllowedIps=$ALLOWED_IPS"; fi
-          sam build
-          sam deploy \
-            --stack-name $STACK_NAME \
-            --resolve-s3 \
-            --capabilities CAPABILITY_IAM \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --parameter-overrides $PARAMS
-      - name: Show API URL
-        run: |
-          aws cloudformation describe-stacks --stack-name $STACK_NAME \
-            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text
+          chmod +x scripts/*.sh
+          ./scripts/deploy.sh

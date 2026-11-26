@@ -1,11 +1,13 @@
 import importlib.util
 import os
+import sys
 
 import boto3
 import pytest
 from moto import mock_aws
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "shared"))
 
 
 def load_module(*parts):
@@ -19,18 +21,14 @@ def load_module(*parts):
 
 @pytest.fixture
 def table(monkeypatch):
-    monkeypatch.setenv("TABLE_NAME", "Packages")
+    """Bucket S3 tiruan (moto) tempat paket wisata disimpan."""
+    monkeypatch.setenv("PACKAGES_BUCKET", "tour-packages-test")
     monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
     with mock_aws():
-        boto3.client("dynamodb").create_table(
-            TableName="Packages",
-            BillingMode="PAY_PER_REQUEST",
-            KeySchema=[{"AttributeName": "packageId", "KeyType": "HASH"}],
-            AttributeDefinitions=[{"AttributeName": "packageId", "AttributeType": "S"}],
-        )
-        yield boto3.resource("dynamodb").Table("Packages")
+        boto3.client("s3").create_bucket(Bucket="tour-packages-test")
+        yield "tour-packages-test"
 
 
 @pytest.fixture

@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Paket wisata - fondasi (repo image ECR + bucket S3 data paket)
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: tour
+
+Resources:
+  CatalogRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${Prefix}-catalog"
+      EmptyOnDelete: true
+
+  OperatorRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${Prefix}-operator"
+      EmptyOnDelete: true
+
+  # Pengganti DynamoDB: role lab untuk ECS task (PipelineRole) hanya punya akses S3.
+  PackagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  PackagesBucket:
+    Value: !Ref PackagesBucket
+  CatalogRepositoryUri:
+    Value: !GetAtt CatalogRepository.RepositoryUri
+  OperatorRepositoryUri:
+    Value: !GetAtt OperatorRepository.RepositoryUri

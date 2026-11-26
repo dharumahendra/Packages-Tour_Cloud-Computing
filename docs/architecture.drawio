@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Gambar 1 - Arsitektur" id="arch">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="720" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="cloud" value="AWS Cloud — Region us-east-1 (N. Virginia)" style="points=[];outlineConnect=0;html=1;whiteSpace=wrap;fontSize=12;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#147EBA;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="190" y="30" width="980" height="660" as="geometry" />
+        </mxCell>
+        <mxCell id="vpc" value="LabVPC — 2 subnet publik (2 AZ)" style="points=[];outlineConnect=0;html=1;whiteSpace=wrap;fontSize=12;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc2;strokeColor=#8C4FFF;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#AAB7B8;dashed=0;" vertex="1" parent="cloud">
+          <mxGeometry x="20" y="40" width="640" height="600" as="geometry" />
+        </mxCell>
+        <mxCell id="tourist" value="Wisatawan&lt;br&gt;(publik, read-only)" style="outlineConnect=0;fontColor=#232F3E;fillColor=#232F3D;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.users;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="operator" value="Operator tur&lt;br&gt;(x-admin-key + IP)" style="outlineConnect=0;fontColor=#232F3E;fillColor=#232F3D;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.user;" vertex="1" parent="1">
+          <mxGeometry x="60" y="430" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="alb" value="Application Load Balancer&lt;br&gt;:80 produksi · :8080 tes&lt;br&gt;/admin/* → operator, lainnya → catalog" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#945DF2;gradientDirection=north;fillColor=#5A30B5;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.elastic_load_balancing;" vertex="1" parent="vpc">
+          <mxGeometry x="60" y="250" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="ecs" value="Amazon ECS — Fargate (tour-app-cluster)" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#D05C17;verticalAlign=top;align=left;spacingLeft=10;fontColor=#D05C17;" vertex="1" parent="vpc">
+          <mxGeometry x="300" y="60" width="320" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="catalog" value="catalog-service&lt;br&gt;(container Python, read-only)&lt;br&gt;TG blue / green" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" vertex="1" parent="vpc">
+          <mxGeometry x="420" y="120" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="opfn" value="operator-service&lt;br&gt;(container Python, CRUD + validasi)&lt;br&gt;TG blue / green" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.fargate;" vertex="1" parent="vpc">
+          <mxGeometry x="420" y="380" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="Amazon S3&lt;br&gt;data paket (JSON per paket)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#60A337;gradientDirection=north;fillColor=#277116;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="cloud">
+          <mxGeometry x="780" y="290" width="78" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="ecr" value="Amazon ECR&lt;br&gt;tour-catalog, tour-operator" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F78E04;gradientDirection=north;fillColor=#D05C17;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ecr;" vertex="1" parent="cloud">
+          <mxGeometry x="780" y="60" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cd" value="AWS CodeDeploy&lt;br&gt;blue/green canary 10% → 100%&lt;br&gt;(DeployRole)" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#4AB29A;gradientDirection=north;fillColor=#116D5B;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.codedeploy;" vertex="1" parent="cloud">
+          <mxGeometry x="780" y="170" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cw" value="Amazon CloudWatch&lt;br&gt;Logs + Metrics" style="outlineConnect=0;fontColor=#232F3E;gradientColor=#F34482;gradientDirection=north;fillColor=#BC1356;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="cloud">
+          <mxGeometry x="780" y="480" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="role" value="Task role: PipelineRole&lt;br&gt;(ECR read, S3, Logs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="vpc">
+          <mxGeometry x="330" y="250" width="150" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="1" source="tourist" target="alb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="1" source="operator" target="alb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="/health, /packages/*" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="vpc" source="alb" target="catalog"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="/admin/*" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="vpc" source="alb" target="opfn"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" value="read (ACTIVE saja,&lt;br&gt;tanpa costPrice)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="1" source="catalog" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" value="read / write" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;" edge="1" parent="1" source="opfn" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" value="pull image" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="ecr" target="catalog"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" value="alihkan trafik" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="cd" target="alb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" value="logs" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="opfn" target="cw"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

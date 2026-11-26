@@ -99,6 +99,38 @@ def test_full_flow_across_services(catalog, operator):
     assert call(operator, "DELETE /admin/packages/{id}", id=pid, headers=KEY)[0] == 404
 
 
+def test_http_adapter_routes_and_client_ip(catalog, operator):
+    """Adapter HTTP (dipakai di container ECS) meneruskan route, query, dan IP klien dengan benar."""
+    import threading
+    import urllib.request
+
+    from server import make_server
+
+    seen = {}
+
+    def spy(event, context):
+        seen.update(event)
+        return operator.lambda_handler(event, context)
+
+    server = make_server(spy, operator.ROUTES, port=0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        url = f"http://127.0.0.1:{server.server_address[1]}/admin/packages/abc-123?x=1"
+        req = urllib.request.Request(url, method="DELETE", headers={
+            "x-admin-key": "rahasia", "X-Forwarded-For": "6.6.6.6, 9.9.9.9"})
+        try:
+            urllib.request.urlopen(req)
+        except urllib.error.HTTPError as e:
+            assert e.code == 404  # paket tidak ada
+        assert seen["routeKey"] == "DELETE /admin/packages/{id}"
+        assert seen["pathParameters"] == {"id": "abc-123"}
+        assert seen["queryStringParameters"] == {"x": "1"}
+        # IP paling kanan = IP yang ditambahkan ALB; yang kiri bisa dipalsukan klien
+        assert seen["requestContext"]["http"]["sourceIp"] == "9.9.9.9"
+    finally:
+        server.shutdown()
+
+
 def test_monolith_has_no_access_control(monolith):
     status, pkg = call(monolith, "POST /packages", PACKAGE)
     assert status == 201

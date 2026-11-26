@@ -6,23 +6,18 @@ import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
-import boto3
-from botocore.exceptions import ClientError
+from store import make_store, to_json
 
-TABLE = boto3.resource("dynamodb").Table(os.environ["TABLE_NAME"])
+STORE = make_store()
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 ALLOWED_IPS = {ip.strip() for ip in os.environ.get("ALLOWED_IPS", "").split(",") if ip.strip()}
+ROUTES = ["GET /admin/health", "GET /admin/packages", "POST /admin/packages",
+          "PUT /admin/packages/{id}", "DELETE /admin/packages/{id}"]
 
 REQUIRED = ["name", "destination", "durationDays", "price", "quota"]
 EDITABLE = {"name", "destination", "durationDays", "price", "quota", "remainingQuota",
             "costPrice", "operatorNotes", "status"}
 STATUSES = {"ACTIVE", "INACTIVE"}
-
-
-def to_json(value):
-    if isinstance(value, Decimal):
-        return int(value) if value == value.to_integral_value() else float(value)
-    raise TypeError(f"Tipe tidak dikenal: {type(value)}")
 
 
 def response(status, body=None):
@@ -91,7 +86,7 @@ def lambda_handler(event, context):
         return response(400, {"message": "Body harus berupa objek JSON"})
 
     if route == "GET /admin/packages":
-        return response(200, TABLE.scan().get("Items", []))
+        return response(200, STORE.scan())
 
     if route == "POST /admin/packages":
         missing = [f for f in REQUIRED if f not in body]
@@ -107,14 +102,14 @@ def lambda_handler(event, context):
             "packageId": str(uuid.uuid4()),
             "createdAt": datetime.now(timezone.utc).isoformat(),
         })
-        TABLE.put_item(Item=pkg)
+        STORE.put(pkg)
         return response(201, pkg)
 
     if route == "PUT /admin/packages/{id}":
         changes = {k: v for k, v in body.items() if k in EDITABLE}
         if not changes:
             return response(400, {"message": "Tidak ada field yang bisa diubah"})
-        current = TABLE.get_item(Key={"packageId": package_id}).get("Item")
+        current = STORE.get(package_id)
         if not current:
             return response(404, {"message": "Paket wisata tidak ditemukan"})
         updated = {**current, **changes}
@@ -122,21 +117,18 @@ def lambda_handler(event, context):
         if error:
             return response(400, {"message": error})
         updated["updatedAt"] = datetime.now(timezone.utc).isoformat()
-        try:
-            TABLE.put_item(Item=updated, ConditionExpression="attribute_exists(packageId)")
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                return response(404, {"message": "Paket wisata tidak ditemukan"})
-            raise
+        STORE.put(updated)
         return response(200, updated)
 
     if route == "DELETE /admin/packages/{id}":
-        try:
-            TABLE.delete_item(Key={"packageId": package_id}, ConditionExpression="attribute_exists(packageId)")
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                return response(404, {"message": "Paket wisata tidak ditemukan"})
-            raise
+        if not STORE.delete(package_id):
+            return response(404, {"message": "Paket wisata tidak ditemukan"})
         return response(204)
 
     return response(404, {"message": f"Route tidak dikenal: {route}"})
+
+
+if __name__ == "__main__":
+    from server import serve
+
+    serve(lambda_handler, ROUTES)
