@@ -27,8 +27,7 @@
   <div id="grid" class="grid"><p class="empty">Memuat...</p></div>
 
   <script>
-    // Ganti dengan output ApiUrl dari stack CloudFormation tour-app
-    const API_URL = "https://<api-id>.execute-api.us-east-1.amazonaws.com";
+    const API_URL = "http://tour-alb-1447830951.us-east-1.elb.amazonaws.com";
     const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 
     function line(cls, text) {

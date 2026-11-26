@@ -69,7 +69,6 @@ def test_full_flow_across_services(catalog, operator):
     assert pkg["remainingQuota"] == 20 and pkg["status"] == "ACTIVE"
     pid = pkg["packageId"]
 
-    # catalog melihat paket yang dibuat operator, tanpa data internal
     status, public = call(catalog, "GET /packages/{id}", id=pid)
     assert status == 200
     assert "costPrice" not in public and "operatorNotes" not in public
@@ -81,7 +80,6 @@ def test_full_flow_across_services(catalog, operator):
     status, items = call(catalog, "GET /packages")
     assert [i["price"] for i in items] == [450000, 850000]  # urut harga termurah
 
-    # update sisa kuota dan harga (harga boleh desimal)
     status, updated = call(operator, "PUT /admin/packages/{id}", {"remainingQuota": 3, "price": 799000.5},
                            id=pid, headers=KEY)
     assert status == 200 and updated["remainingQuota"] == 3 and updated["price"] == 799000.5
@@ -89,7 +87,6 @@ def test_full_flow_across_services(catalog, operator):
     assert call(operator, "PUT /admin/packages/{id}", {"quota": 2}, id=pid, headers=KEY)[0] == 400
     assert call(operator, "PUT /admin/packages/{id}", {"status": "ACTIVE"}, id="tidak-ada", headers=KEY)[0] == 404
 
-    # paket nonaktif hilang dari katalog publik, tapi tetap terlihat oleh operator
     assert call(operator, "PUT /admin/packages/{id}", {"status": "INACTIVE"}, id=pid, headers=KEY)[0] == 200
     assert call(catalog, "GET /packages/{id}", id=pid)[0] == 404
     assert len(call(catalog, "GET /packages")[1]) == 1
@@ -134,6 +131,5 @@ def test_http_adapter_routes_and_client_ip(catalog, operator):
 def test_monolith_has_no_access_control(monolith):
     status, pkg = call(monolith, "POST /packages", PACKAGE)
     assert status == 201
-    # monolit membocorkan data internal dan mengizinkan hapus tanpa izin
     assert "costPrice" in call(monolith, "GET /packages/{id}", id=pkg["packageId"])[1]
     assert call(monolith, "DELETE /packages/{id}", id=pkg["packageId"])[0] == 204

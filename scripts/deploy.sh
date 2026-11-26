@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 # Deploy microservices paket wisata ke ECS Fargate (dipakai GitHub Actions; butuh Docker + AWS CLI + python3/boto3).
 # Pakai: ADMIN_KEY=... [ALLOWED_IPS=...] ./scripts/deploy.sh
-#
-# Akun lab tidak boleh CloudFormation, jadi resource dibuat langsung lewat API (scripts/provision.py):
-# 1. repo ECR + bucket S3
-# 2. build & push image (tag = hash isi shared/ + services/<svc>/, jadi hanya service yang berubah yang di-build)
-# 3. ALB + ECS + CodeDeploy dibuat sekali; rilis berikutnya lewat CodeDeploy blue/green canary
 set -euo pipefail
 : "${ADMIN_KEY:?Isi ADMIN_KEY (huruf dan angka saja)}"
 export AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}

@@ -1,4 +1,4 @@
-﻿"""catalog-service: katalog paket wisata untuk wisatawan (read-only, padanan 'customer' di lab asli)."""
+"""catalog-service: katalog paket wisata untuk wisatawan (read-only, padanan 'customer' di lab asli)."""
 import json
 
 from store import make_store, to_json
@@ -6,7 +6,6 @@ from store import make_store, to_json
 STORE = make_store()
 VERSION = "1.2"
 ROUTES = ["GET /health", "GET /packages", "GET /packages/{id}"]
-# Field internal (harga modal, catatan operator) tidak ditampilkan ke wisatawan
 PUBLIC_FIELDS = ["packageId", "name", "destination", "durationDays", "price", "quota", "remainingQuota", "status"]
 
 

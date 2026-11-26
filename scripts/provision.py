@@ -22,7 +22,6 @@ from botocore.exceptions import ClientError
 
 PREFIX = os.environ.get("STACK_PREFIX") or "tour"
 SERVICES = {
-    # nama: (path health check, butuh rahasia operator?)
     "catalog": ("/health", False),
     "operator": ("/admin/health", True),
 }
@@ -44,7 +43,6 @@ def region():
     return boto3.session.Session().region_name or "us-east-1"
 
 
-# ---------------------------------------------------------------- base
 def base(_args):
     ecr = boto3.client("ecr")
     for svc in SERVICES:
@@ -65,7 +63,6 @@ def base(_args):
     print(bucket)
 
 
-# ---------------------------------------------------------------- jaringan
 def network(ec2):
     vpc = os.environ.get("VPC_ID")
     if not vpc:
@@ -198,7 +195,6 @@ def infrastructure():
             "cluster": cluster, "log_group": log_group, "app": app}
 
 
-# ---------------------------------------------------------------- ECS + CodeDeploy
 def container_def(svc, image, env, log_group):
     return {
         "name": svc, "image": image, "essential": True,
@@ -350,7 +346,6 @@ def app(args):
     print(f"http://{infra['lb']['DNSName']}")
 
 
-# ---------------------------------------------------------------- cleanup
 def destroy(_args):
     ec2, elb, ecs = boto3.client("ec2"), boto3.client("elbv2"), boto3.client("ecs")
     cd, ecr, s3, logs = boto3.client("codedeploy"), boto3.client("ecr"), boto3.resource("s3"), boto3.client("logs")

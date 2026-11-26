@@ -1,4 +1,4 @@
-﻿# CI/CD: setiap push ke main -> tes -> build image -> deploy ke ECS (CodeDeploy blue/green canary).
+# CI/CD: setiap push ke main -> tes -> build image -> deploy ke ECS (CodeDeploy blue/green canary).
 # Secrets AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN kedaluwarsa tiap sesi lab:
 # perbarui dari "AWS Details" setiap kali Start Lab.
 name: test-and-deploy
@@ -35,7 +35,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install boto3
-      # Bersihkan secret dari spasi/baris baru/awalan "aws_xxx=" yang sering ikut tersalin dari AWS Details
       - name: Load AWS credentials
         env:
           KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
