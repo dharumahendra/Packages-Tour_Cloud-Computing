@@ -33,8 +33,7 @@ dengan rilis bertahap (canary blue/green).
 
 > **Catatan lab.** Rencana awal memakai Lambda + API Gateway + DynamoDB. Akun lab tidak punya `LabRole`,
 > menolak `iam:CreateRole`, dan memblokir CloudShell, sehingga arsitektur disesuaikan ke role bawaan lab:
-> `PipelineRole` (ECS task: ECR, S3, Logs) dan `DeployRole` (CodeDeploy ECS). Detail di
-> [`docs/PANDUAN-ECS.md`](docs/PANDUAN-ECS.md).
+> `PipelineRole` (ECS task: ECR, S3, Logs) dan `DeployRole` (CodeDeploy ECS).
 
 ---
 
@@ -97,12 +96,12 @@ flowchart LR
 │   ├── e2e.sh                   # tes end-to-end
 │   └── monolith-demo.ps1        # demo masalah monolit (Gambar 3)
 ├── frontend/index.html          # halaman katalog statis (opsional)
-└── docs/                        # diagram, estimasi biaya, bukti, panduan
+└── docs/                        # diagram, estimasi biaya, bukti
 ```
 
 ## 4. Deploy
 
-Ikuti [`docs/PANDUAN-ECS.md`](docs/PANDUAN-ECS.md). Ringkasnya: isi 4 secret GitHub (`AWS_ACCESS_KEY_ID`,
+Isi 4 secret GitHub (`AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, `ADMIN_KEY`), lalu `git push`. Workflow membuat semua
 resource pada run pertama, dan pada run berikutnya merilis service yang berubah lewat canary.
 
